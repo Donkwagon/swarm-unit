@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var ArticleBacklog = require('./backlog_article.model');
 var Queue = require('./queue.model');
+var os =              require('os');
 
 
 var admin = require("firebase-admin");
@@ -20,6 +21,26 @@ var supervisorSchema = new Schema({
   updated_at: Date
 
 });
+
+supervisorSchema.methods.registerServer = () => {
+    var serversQue = ref.child("servers");
+    var server = {
+        type: "supervisor",
+        created_at: new Date(),
+        updated_at: new Date(),
+        system:{
+            host: os.hostname(),
+            type: os.type(),
+            platform: os.platform(),
+            loadAvg: os.loadavg(),
+            totalMem: os.totalmem(),
+            freeMem: os.freemem(),
+            networkInterfaces: os.networkInterfaces()
+        }
+    }
+
+    serversQue.push().set(server);
+}
 
 supervisorSchema.methods.getUrlBacklogs = () => {
     var upperBound = 2600706;
@@ -69,7 +90,7 @@ getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
 }
 
 publishQue = function(queueData) {
-    console.log(JSON.stringify(queueData));
+    
     var queue = new Queue({
         data: queueData,
         created_at: new Date(),

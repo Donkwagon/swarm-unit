@@ -34,6 +34,7 @@ function Main() {
     // -mark the que as completed and publish the generated report
 
     var sup = new Supervisor();
+    sup.registerServer();
     sup.getUrlBacklogs();
 }
 
