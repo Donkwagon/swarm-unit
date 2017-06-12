@@ -1,13 +1,15 @@
 // grab the things we need
-var mongoose = require('mongoose');
+var mongoose =    require('mongoose');
+var request =     require('request');
+var cheerio =     require('cheerio');
+var os =          require('os');
+var admin =       require("firebase-admin");
+var chalk =       require('chalk');
+var parser =       require('../parsers/parser');
+
 var Schema = mongoose.Schema;
-
-var os =              require('os');
-
-var admin = require("firebase-admin");
 var firebaseDb = admin.database();
 var ref = firebaseDb.ref("redis");
-
 
 var workerSchema = new Schema({
 
@@ -50,13 +52,64 @@ workerSchema.methods.claimQue = () => {
             let que = snapshot.val();
             let key = snapshot.key;
             ref.child(key).remove();
+
+            executeQue(que,0)
         });
 
     });
 }
 
-executeQue = function(que) {
-  
+executeQue = function(que,i) {
+
+  let max = 3000;
+  let min = 1000;
+  let intv = Math.random() * (max - min) + min;
+
+  task = que.data[i];
+  crawl(task);
+  i++;
+  if(i < que.data.length){
+    setTimeout(function(){
+      executeQue(que,i);
+    }, intv);
+  }else{
+    debrief(que);
+  }
+}
+
+crawl = function(task) {
+  let URL = "https://seekingalpha.com/article/" + task.i;
+  console.log(URL);
+  let req = request.defaults({jar: true,rejectUnauthorized: false,followAllRedirects: true});
+  let UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Safari/537.36';
+
+  req.get({url: URL,headers: {'User-Agent': UserAgent}},(err, res, html) =>{
+
+      if(err||res.statusCode != 200){
+        if(res.statusCode == 400){
+          console.log(chalk.red('error:' + error + 'status:' + res.statusCode));
+        }
+        if(res.statusCode == 429){
+
+        }
+
+      }else{
+
+          console.log(chalk.green('status' + res.statusCode));
+          parser.SAArticle(html,URL);
+
+      }
+  });
+}
+
+debrief = function(que) {
+  console.log("");
+}
+
+deccelerate = function() {
+}
+
+accelerate = function() {
 }
 
 var Worker = mongoose.model('Worker', workerSchema);

@@ -10,7 +10,6 @@ var firebaseDb = admin.database();
 var ref = firebaseDb.ref("redis");
 
 
-
 function Main() {
     console.log("executing main");
     // Both supervisor and worker are using same code base
@@ -69,6 +68,5 @@ getRole = function() {
     });
     
 };
-
 
 module.exports = Main;
