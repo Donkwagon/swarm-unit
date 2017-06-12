@@ -74,7 +74,6 @@ getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
                     break;
                 }else{
                     var dice = parseInt(Math.random()*(7 - 1) +  1);
-                    console.log(dice);
                     if(dice == 6){
                         docs[i].st = "inqueue";
                         docs[i].save();
@@ -98,7 +97,6 @@ publishQue = function(queueData) {
     })
 
     var queuesRef = ref.child("queues");
-    console.log(queue);
 
     // we can also chain the two calls together
     queuesRef.push().set(queue.toObject());

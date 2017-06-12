@@ -3,6 +3,11 @@ var app =         express();
 
 var Role =        require('./models/role');
 var Supervisor =  require('./models/supervisor');
+var Worker =      require('./models/worker');
+
+var admin = require("firebase-admin");
+var firebaseDb = admin.database();
+var ref = firebaseDb.ref("redis");
 
 
 
@@ -33,17 +38,37 @@ function Main() {
     // -generate a tast report after the que is done
     // -mark the que as completed and publish the generated report
 
-    var sup = new Supervisor();
-    sup.registerServer();
-    sup.getUrlBacklogs();
+    getRole();
 }
 
-Main.prototype.getRole = function() {
+getRole = function() {
+
+    //get number of supervisor
+    var serversQue = ref.child("servers");
+
+    serversQue.orderByChild("type").equalTo("supervisor").on("value", function(snapshot) {
+
+        numSupervisor = snapshot.numChildren();
+        console.log(numSupervisor);
+        if(numSupervisor < 2){//register as supervior if there are less than 2 supervisors on duty
+            
+            var supervisor = new Supervisor();
+            supervisor.registerServer();
+            supervisor.getUrlBacklogs();
+
+        }else{
+
+            var worker = new Worker();
+            worker.registerServer();
+            worker.claimQue();
+
+        }
+
+    }, function (errorObject) {
+        console.log("The read failed: " + errorObject.code);
+    });
     
 };
 
-Main.prototype.getRole = function() {
-    
-};
 
 module.exports = Main;
