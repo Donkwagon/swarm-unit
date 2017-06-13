@@ -1,9 +1,9 @@
 const express =   require('express');
 var app =         express();
+var cheerio =     require('cheerio');
 
-var Role =        require('./models/role');
-var Supervisor =  require('./models/supervisor');
-var Worker =      require('./models/worker');
+var Article =     require('../models/content/article.model');
+
 
 var admin = require("firebase-admin");
 var firebaseDb = admin.database();
@@ -86,11 +86,9 @@ Parser.prototype.SAArticle = function(html,URL) {
 };
 
 Parser.prototype.SAStockTalk = function(html) {
-    
 };
 
 Parser.prototype.STTwit = function(html) {
-    
 };
 
 

@@ -1,11 +1,10 @@
 // grab the things we need
 var mongoose =    require('mongoose');
 var request =     require('request');
-var cheerio =     require('cheerio');
 var os =          require('os');
 var admin =       require("firebase-admin");
 var chalk =       require('chalk');
-var parser =       require('../parsers/parser');
+var Parser =      require('../parsers/parser');
 
 var Schema = mongoose.Schema;
 var firebaseDb = admin.database();
@@ -60,56 +59,106 @@ workerSchema.methods.claimQue = () => {
 }
 
 executeQue = function(que,i) {
-
+  var startTime = new Date().getTime();
   let max = 3000;
   let min = 1000;
   let intv = Math.random() * (max - min) + min;
 
-  task = que.data[i];
-  crawl(task);
+  crawl(que.data[i]);
+  
   i++;
   if(i < que.data.length){
     setTimeout(function(){
       executeQue(que,i);
     }, intv);
   }else{
-    debrief(que);
+    var endTime = new Date().getTime();
+    var timeConsumed = (endTime - startTime)/1000;
+    debrief(que,timeConsumed);
   }
 }
 
 crawl = function(task) {
-  let URL = "https://seekingalpha.com/article/" + task.i;
-  console.log(URL);
+  task.st = "crawling";
+  let URL = URLTransformer(task.i,task.t);
   let req = request.defaults({jar: true,rejectUnauthorized: false,followAllRedirects: true});
   let UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Safari/537.36';
 
-  req.get({url: URL,headers: {'User-Agent': UserAgent}},(err, res, html) =>{
+  req.get({url: URL,headers: {'User-Agent': UserAgent}},function(err, res, html){
+
+      task.res = res.statusCode;
+      task.st = "processing";
 
       if(err||res.statusCode != 200){
-        if(res.statusCode == 400){
-          console.log(chalk.red('error:' + error + 'status:' + res.statusCode));
-        }
-        if(res.statusCode == 429){
+        task.st = "error";
 
-        }
+        if(res.statusCode == 404){console.log(chalk.red('err:' + err + 'st:' + res.statusCode));}
+        if(res.statusCode == 429){console.log(chalk.red('err:' + err + 'st:' + res.statusCode));}
 
       }else{
 
-          console.log(chalk.green('status' + res.statusCode));
-          parser.SAArticle(html,URL);
+        console.log(chalk.green('status' + res.statusCode));
+        parserSelector(task,html,URL,task.t);
 
       }
   });
+
+
 }
 
-debrief = function(que) {
+debrief = function(que,timeConsumed) {
   console.log("");
+  que.status = "completed";
+  let i = 0;
+  let len = que.data.length;
+  let success = 0;
+  let failure = 0;
+  let successRate = 0;
+  while(i < len){
+    if(que.data[i].st == "completed"){
+      success++;
+    }else{
+      failure++;
+    }
+    i++;
+  }
+  successRate = success/len;
+
+  que.debrief = {
+    success: sucess,
+    failure: failure,
+    sucessRate: successRate,
+    timeConsumed: timeConsumed
+  }
+}
+
+returnCompletedQue = function(que) {
+  
+  var queuesRef = ref.child("queues");
+  queuesRef.push().set(que.toObject());
 }
 
 deccelerate = function() {
 }
 
 accelerate = function() {
+}
+
+URLTransformer = function(urlSeed,type){
+  switch (type) {
+    case "SAArticle":
+      url = "https://seekingalpha.com/article/" + urlSeed;;
+      return url;
+  }
+}
+
+parserSelector = function(task,html,URL,type){
+  parser = new Parser();
+  switch (type) {
+    case "SAArticle":
+      data = parser.SAArticle(html,URL);
+      task.st = "completed";
+  }
 }
 
 var Worker = mongoose.model('Worker', workerSchema);

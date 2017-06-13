@@ -38,28 +38,3 @@ mongoose.connect(conStr);
 var main =  require('./server/main');
 setTimeout(function(){main();}, 5000);
 
-
-
-
-console.log("Host");
-console.log(os.hostname());
-console.log("Type");
-console.log(os.type());
-console.log("Platform");
-console.log(os.platform());
-console.log("Architecture");
-console.log(os.arch());
-console.log("Release");
-console.log(os.release());
-console.log("Uptime");
-console.log(os.uptime());
-console.log("Load Average");
-console.log(os.loadavg());
-console.log("Total Memory");
-console.log(os.totalmem()/1024/1024 + "MB");
-console.log("Free Memeory");
-console.log(os.freemem()/1024/1024 + "MB");
-console.log("CPUs");
-console.log(os.cpus());
-console.log("Network Interfaces");
-console.log(os.networkInterfaces());
