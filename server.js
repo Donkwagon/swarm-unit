@@ -10,11 +10,11 @@ var os =              require('os');
 var conStr = "mongodb://Donkw:Idhap007@ds115532-a0.mlab.com:15532,ds115532-a1.mlab.com:15532/heroku_tln16g2j?replicaSet=rs-ds115532;"
 
 ///////////////////////////////////////////////////////
-var serviceAccount =  require("./server/firebase/redis-5d64d-firebase-adminsdk-i86pn-f7b456002c.json");
+var serviceAccount =  require("./server/firebase/swarm-f92be-firebase-adminsdk-2xqe2-88b9c9c713");
 var admin = require("firebase-admin");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://redis-5d64d.firebaseio.com"
+  databaseURL: "https://swarm-f92be.firebaseio.com"
 });
 
 var app = express();
