@@ -1,15 +1,23 @@
-FROM node:boron
+FROM risingstack/alpine:3.4-v6.7.0-4.0.0
 
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+MAINTAINER Martino Fornasa <mf@fornasa.it>
 
-# Install app dependencies
-COPY package.json /usr/src/app/
-RUN npm install
+WORKDIR /opt/app
 
-# Bundle app source
-COPY . /usr/src/app
+# Install yarn
+RUN mkdir -p /opt
+ADD latest.tar.gz /opt/
+RUN mv /opt/dist /opt/yarn
+ENV PATH "$PATH:/opt/yarn/bin"
 
-EXPOSE 8080
-CMD [ "npm", "start" ]
+ADD package.json yarn.lock /tmp/
+
+# Copy cache contents (if any) from local machine
+ADD .yarn-cache.tgz /
+
+# Install packages
+RUN cd /tmp && yarn
+RUN mkdir -p /opt/app && cd /opt/app && ln -s /tmp/node_modules
+
+# Copy the code
+ADD . /opt/app
