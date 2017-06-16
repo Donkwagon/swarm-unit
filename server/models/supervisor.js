@@ -23,11 +23,12 @@ var supervisorSchema = new Schema({
 });
 
 supervisorSchema.methods.registerServer = () => {
+    
     var serversQue = ref.child("servers");
     var server = {
         type: "supervisor",
-        created_at: new Date(),
-        updated_at: new Date(),
+        created_at: new Date().getTime(),
+        updated_at: new Date().getTime(),
         system:{
             host: os.hostname(),
             type: os.type(),
@@ -38,6 +39,7 @@ supervisorSchema.methods.registerServer = () => {
             networkInterfaces: os.networkInterfaces()
         }
     }
+    console.log(server);
 
     serversQue.push().set(server);
 }

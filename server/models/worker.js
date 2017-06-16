@@ -22,23 +22,25 @@ var workerSchema = new Schema({
 
 workerSchema.methods.registerServer = () => {
 
-    var serversQue = ref.child("servers");
-    var server = {
-        type: "worker",
-        created_at: new Date(),
-        updated_at: new Date(),
-        system:{
-            host: os.hostname(),
-            type: os.type(),
-            platform: os.platform(),
-            loadAvg: os.loadavg(),
-            totalMem: os.totalmem(),
-            freeMem: os.freemem(),
-            networkInterfaces: os.networkInterfaces()
-        }
-    }
+  var serversQue = ref.child("servers");
+  var server = {
+      type: "worker",
+      created_at: new Date().getTime(),
+      updated_at: new Date().getTime(),
+      system:{
+          host: os.hostname(),
+          type: os.type(),
+          platform: os.platform(),
+          loadAvg: os.loadavg(),
+          totalMem: os.totalmem(),
+          freeMem: os.freemem(),
+          networkInterfaces: os.networkInterfaces()
+      }
+  }
 
-    serversQue.push().set(server);
+  console.log(server);
+
+  serversQue.push().set(server);
 }
 
 workerSchema.methods.claimQue = () => {
@@ -60,7 +62,7 @@ workerSchema.methods.claimQue = () => {
 
 executeQue = function(que,i) {
   var startTime = new Date().getTime();
-  let max = 3000;
+  let max = 2000;
   let min = 1000;
   let intv = Math.random() * (max - min) + min;
 
@@ -125,7 +127,7 @@ debrief = function(que,timeConsumed) {
   successRate = success/len;
 
   que.debrief = {
-    success: sucess,
+    success: success,
     failure: failure,
     sucessRate: successRate,
     timeConsumed: timeConsumed
