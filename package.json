@@ -1,7 +1,7 @@
 {
-  "name": "swarm",
-  "version": "0.0.0",
-  "license": "MIT",
+  "name": "swarm-unit",
+  "version": "0.0.1",
+  "license": "Nvexus Inc.",
   "scripts": {
     "ng": "ng",
     "start": "node server.js",
