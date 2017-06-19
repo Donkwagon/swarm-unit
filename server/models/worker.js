@@ -50,8 +50,8 @@ workerSchema.methods.claimQue = () => {
     queuesRef.orderByChild("_id").limitToFirst(1).on("value", data => {
 
         data.forEach(snapshot => {
-            let que = snapshot.val();
-            let key = snapshot.key;
+            var que = snapshot.val();
+            var key = snapshot.key;
             ref.child(key).remove();
 
             executeQue(que,0)
@@ -62,9 +62,9 @@ workerSchema.methods.claimQue = () => {
 
 executeQue = function(que,i) {
   var startTime = new Date().getTime();
-  let max = 2000;
-  let min = 1000;
-  let intv = Math.random() * (max - min) + min;
+  var max = 2000;
+  var min = 1000;
+  var intv = Math.random() * (max - min) + min;
 
   crawl(que.data[i]);
   
@@ -82,9 +82,9 @@ executeQue = function(que,i) {
 
 crawl = function(task) {
   task.st = "crawling";
-  let URL = URLTransformer(task.i,task.t);
-  let req = request.defaults({jar: true,rejectUnauthorized: false,followAllRedirects: true});
-  let UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Safari/537.36';
+  var URL = URLTransformer(task.i,task.t);
+  var req = request.defaults({jar: true,rejectUnauthorized: false,followAllRedirects: true});
+  var UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.96 Safari/537.36';
 
   req.get({url: URL,headers: {'User-Agent': UserAgent}},function(err, res, html){
 
@@ -111,11 +111,11 @@ crawl = function(task) {
 debrief = function(que,timeConsumed) {
   console.log("");
   que.status = "completed";
-  let i = 0;
-  let len = que.data.length;
-  let success = 0;
-  let failure = 0;
-  let successRate = 0;
+  var i = 0;
+  var len = que.data.length;
+  var success = 0;
+  var failure = 0;
+  var successRate = 0;
   while(i < len){
     if(que.data[i].st == "completed"){
       success++;
