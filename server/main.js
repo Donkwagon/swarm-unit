@@ -14,14 +14,13 @@ function Main() {
     console.log("executing main");
     // Both supervisor and worker are using same code base
 
-    // STEP 1
     // Check Registered server list
     // Start and register as a supervisor if number of supervisor is less than 2
     // Start and register as a worker if number of supervisor is 2
 
-    // STEP 2
     // Start project base on the role
-    // 
+    getRole();
+    
     // -SUPERVISOR
     // -Collect url params from url backlog documents
     // -Format the result into proper urls base on the site, type
@@ -29,7 +28,7 @@ function Main() {
     // -Publish the que in to firebase
     // -Process, archive and remove the completed que from firebase
     // -Collect, porcess and archive worker's que report
-    // 
+
     // -WORKER
     // -Get a url que from firebase and mark it as in progress
     // -fetch the url and store parsed data into database using site parsing code base
@@ -37,7 +36,6 @@ function Main() {
     // -generate a tast report after the que is done
     // -mark the que as completed and publish the generated report
 
-    getRole();
 }
 
 getRole = function() {
@@ -45,10 +43,9 @@ getRole = function() {
     //get number of supervisor
     var serversQue = ref.child("servers");
 
-    serversQue.orderByChild("type").equalTo("supervisor").on("value", function(snapshot) {
+    serversQue.orderByChild("type").equalTo("supervisor").once("value", function(snapshot) {
 
         numSupervisor = snapshot.numChildren();
-        console.log(numSupervisor);
         if(numSupervisor < 2){//register as supervior if there are less than 2 supervisors on duty
             
             var supervisor = new Supervisor();

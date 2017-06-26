@@ -39,6 +39,7 @@ supervisorSchema.methods.registerServer = () => {
             networkInterfaces: os.networkInterfaces()
         }
     }
+
     console.log(server);
 
     serversQue.push().set(server);
@@ -98,11 +99,10 @@ publishQue = function(queueData) {
         updated_at: new Date()
     })
 
-    var queuesRef = ref.child("queues");
-
-    // we can also chain the two calls together
-    queuesRef.push().set(queue.toObject());
+    ref.child("queues").push().set(queue.toObject());
 }
+
+
 
 var Supervisor = mongoose.model('Supervisor', supervisorSchema);
 

@@ -38,9 +38,8 @@ workerSchema.methods.registerServer = () => {
       }
   }
 
-  console.log(server);
-
   serversQue.push().set(server);
+  
 }
 
 workerSchema.methods.claimQue = () => {
@@ -50,11 +49,13 @@ workerSchema.methods.claimQue = () => {
     queuesRef.orderByChild("_id").limitToFirst(1).on("value", data => {
 
         data.forEach(snapshot => {
+
             var que = snapshot.val();
             var key = snapshot.key;
             ref.child(key).remove();
 
             executeQue(que,0)
+
         });
 
     });
@@ -109,21 +110,26 @@ crawl = function(task) {
 }
 
 debrief = function(que,timeConsumed) {
-  console.log("");
+
   que.status = "completed";
+
   var i = 0;
   var len = que.data.length;
   var success = 0;
   var failure = 0;
   var successRate = 0;
+
   while(i < len){
+
     if(que.data[i].st == "completed"){
       success++;
     }else{
       failure++;
     }
+
     i++;
   }
+
   successRate = success/len;
 
   que.debrief = {
@@ -132,19 +138,18 @@ debrief = function(que,timeConsumed) {
     sucessRate: successRate,
     timeConsumed: timeConsumed
   }
+
 }
 
 returnCompletedQue = function(que) {
-  
-  var queuesRef = ref.child("queues");
-  queuesRef.push().set(que.toObject());
+
+  ref.child("queues").push().set(que.toObject());
+
 }
 
-deccelerate = function() {
-}
+deccelerate = function() {}
 
-accelerate = function() {
-}
+accelerate = function() {}
 
 URLTransformer = function(urlSeed,type){
   switch (type) {

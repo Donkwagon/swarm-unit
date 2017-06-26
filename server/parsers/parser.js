@@ -91,5 +91,8 @@ Parser.prototype.SAStockTalk = function(html) {
 Parser.prototype.STTwit = function(html) {
 };
 
+Parser.prototype.StreetInsider = function(html) {
+};
+
 
 module.exports = Parser;
