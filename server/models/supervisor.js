@@ -11,6 +11,8 @@ var firebaseDb = admin.database();
 var ref = firebaseDb.ref("redis");
 
 const ARTICLE_BACKLOGS_COLLECTION = "articlbacklogs"
+const CRAWLERS_COLLECTION = "crawlers"
+const CRAWLERBACKLOGS_COLLECTION = "crawlerbacklogs"
 
 // Generic error handler used by all endpoints.
 function handleError(res, reason, message, code) {
@@ -57,6 +59,23 @@ supervisorSchema.methods.getUrlBacklogs = () => {
     var poolSize = 500;
     var queSize = 100;
 
+    //get lots of urls and generate n ques
+
+    //get validated crawler first
+
+    
+    db.collection(ENTRANCE_COLLECTION).find({ validation: true }, function(err, crawlers) {
+        if (err) {
+            handleError(res, err.message, "Failed to get entrance");
+        } else {
+            console.log(crawlers);
+            
+            crawlers.forEach(crawler =>{
+                getCrawlerBacklogs(crawler);
+            });
+        }
+    });
+
     getBatchUrls(upperBound,lowerBound,poolSize,queSize);
 }
 
@@ -95,6 +114,42 @@ getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
         }
     });
 
+}
+
+getCrawlerBacklogs = (crawler) => {
+    var crawlerName = crawler.name;
+    var min = 0;
+    var max = 0;
+    var batchIdStart = 0;
+    var batchIdEnd = 0;
+
+    crawler.urlStrategy.sections.forEach(section => {
+
+        if(section.type == "ID RANGE"){
+            idRangeUrlCount = section.max - section.min;
+            batchIdStart = Math.floor(section.min/crawler.backlogBatchSize);
+            batchIdEnd = Math.round(section.max/crawler.backlogBatchSize);
+        }
+
+    });
+
+    //pick random batchId
+    var randomBatchId = Math.random()*(batchIdEnd - batchIdStart) +  batchIdStart;
+
+    
+    // db.collection(CRAWLERBACKLOGS_COLLECTION).find({ batchId: randomBatchId }, function(err, crawlerBacklog) {
+    //     if (err) {
+    //         handleError(res, err.message, "Failed to get entrance");
+    //     } else {
+    //         console.log(batch);
+            
+    //         var seed = [i,false,0,null,false];///[id, request, num of attempts, response code, success(saved)]
+            
+    //         crawlerBacklog.batch.forEach(seed =>{
+    //             getCrawlerBacklogs(crawler);
+    //         });
+    //     }
+    // });
 }
 
 publishQue = function(queueData) {
