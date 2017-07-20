@@ -1,1 +1,1 @@
-web: ng build npm start
+web: npm start
