@@ -1,14 +1,18 @@
-// grab the things we need
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var ArticleBacklog = require('./backlog_article.model');
-var Queue = require('./queue.model');
+var ArticleBacklog =  require('./backlog_article.model');
+var Queue =           require('./queue.model');
+var Seed =            require('../classes/seed.class');
+
 var os =              require('os');
 
+var mongoose =        require('mongoose');
+var admin =           require("firebase-admin");
 
-var admin = require("firebase-admin");
+var Schema = mongoose.Schema;
+
 var firebaseDb = admin.database();
 var ref = firebaseDb.ref("redis");
+
+var QueueList = [];
 
 const ARTICLE_BACKLOGS_COLLECTION = "articlbacklogs"
 const CRAWLERS_COLLECTION = "crawlers"
@@ -24,6 +28,8 @@ var supervisorSchema = new Schema({
 
   type: String, //Supervisor and worker
   system: Schema.Types.Mixed,
+
+  queueList: Schema.Types.Mixed,
 
   created_at: Date,
   updated_at: Date
@@ -48,36 +54,91 @@ supervisorSchema.methods.registerServer = () => {
         }
     }
 
-    console.log(server);
-
     serversQue.push().set(server);
 }
 
 supervisorSchema.methods.getUrlBacklogs = () => {
-    var upperBound = 2600706;
-    var lowerBound = 4000004;
-    var poolSize = 500;
-    var queSize = 100;
-
-    //get lots of urls and generate n ques
-
+    //get lots of urls and generate n ques (n = 50)
     //get validated crawler first
 
-    
-    db.collection(ENTRANCE_COLLECTION).find({ validation: true }, function(err, crawlers) {
+    var queueNum = 50;
+    QueueList = [];
+
+    var i = 0;
+    while(i < queueNum){
+        var queue = new Queue({
+            data: [],
+            created_at: new Date()
+        });
+        QueueList.push(queue);
+        i++;
+    }
+
+
+    db.collection(CRAWLERS_COLLECTION).find({ validation: true }, function(err, crawlers) {
         if (err) {
             handleError(res, err.message, "Failed to get entrance");
         } else {
-            console.log(crawlers);
-            
             crawlers.forEach(crawler =>{
                 getCrawlerBacklogs(crawler);
             });
+
+            setTimeout(function() {
+                publishQue(QueueList);
+                //this.getUrlBacklogs()
+            },5000)
         }
     });
 
-    getBatchUrls(upperBound,lowerBound,poolSize,queSize);
 }
+
+getCrawlerBacklogs = (crawler) => {
+    var crawlerName = crawler.name;
+    var min = 0; var max = 0;
+    var batchIdStart = 0;
+    var batchIdEnd = 0;
+    var randomBatchId = 0;
+
+    crawler.urlStrategy.sections.forEach(section => {
+
+        if(section.type === "ID RANGE"){
+            idRangeUrlCount = section.max - section.min;
+            batchIdStart = Math.floor(section.min/crawler.backlogBatchSize);
+            batchIdEnd = Math.round(section.max/crawler.backlogBatchSize);
+            randomBatchId = Math.floor(Math.random()*(batchIdEnd - batchIdStart) +  batchIdStart);
+        }
+
+    });
+
+    if(randomBatchId){
+
+        db.collection(CRAWLERBACKLOGS_COLLECTION).findOne({'batchId': randomBatchId}, function(err, crawlerBacklog) {
+            if (err) {
+                handleError(res, err.message, "Failed to get entrance");
+            } else {
+                crawlerBacklog.batch.forEach(el =>{
+                    var seed = new Seed(el);
+
+                    pushToRandomQue(seed);
+                });
+            }
+        });
+
+    }else{
+
+        console.log("randomBatchId undefined");
+
+    }
+}
+
+pushToRandomQue = (seed) => {
+    var len = QueueList.length;
+    randomQueueIndex = Math.floor(Math.random()*len);
+    QueueList[randomQueueIndex].data.push(seed);
+}
+
+
+
 
 getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
 
@@ -116,53 +177,12 @@ getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
 
 }
 
-getCrawlerBacklogs = (crawler) => {
-    var crawlerName = crawler.name;
-    var min = 0;
-    var max = 0;
-    var batchIdStart = 0;
-    var batchIdEnd = 0;
-
-    crawler.urlStrategy.sections.forEach(section => {
-
-        if(section.type == "ID RANGE"){
-            idRangeUrlCount = section.max - section.min;
-            batchIdStart = Math.floor(section.min/crawler.backlogBatchSize);
-            batchIdEnd = Math.round(section.max/crawler.backlogBatchSize);
-        }
-
-    });
-
-    //pick random batchId
-    var randomBatchId = Math.random()*(batchIdEnd - batchIdStart) +  batchIdStart;
-
-    
-    // db.collection(CRAWLERBACKLOGS_COLLECTION).find({ batchId: randomBatchId }, function(err, crawlerBacklog) {
-    //     if (err) {
-    //         handleError(res, err.message, "Failed to get entrance");
-    //     } else {
-    //         console.log(batch);
-            
-    //         var seed = [i,false,0,null,false];///[id, request, num of attempts, response code, success(saved)]
-            
-    //         crawlerBacklog.batch.forEach(seed =>{
-    //             getCrawlerBacklogs(crawler);
-    //         });
-    //     }
-    // });
-}
-
-publishQue = function(queueData) {
-    
-    var queue = new Queue({
-        data: queueData,
-        created_at: new Date(),
-        updated_at: new Date()
+publishQue = function(queue) {
+    QueueList.forEach(queue => {
+        ref.child("queues").push().set(queue.toObject());
     })
-
-    ref.child("queues").push().set(queue.toObject());
+    
 }
-
 
 
 var Supervisor = mongoose.model('Supervisor', supervisorSchema);
