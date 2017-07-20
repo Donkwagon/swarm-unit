@@ -58,8 +58,6 @@ supervisorSchema.methods.registerServer = () => {
 }
 
 supervisorSchema.methods.getUrlBacklogs = () => {
-    //get lots of urls and generate n ques (n = 50)
-    //get validated crawler first
 
     var queueNum = 50;
     QueueList = [];
@@ -73,7 +71,6 @@ supervisorSchema.methods.getUrlBacklogs = () => {
         QueueList.push(queue);
         i++;
     }
-
 
     db.collection(CRAWLERS_COLLECTION).find({ validation: true }, function(err, crawlers) {
         if (err) {
@@ -117,7 +114,8 @@ getCrawlerBacklogs = (crawler) => {
                 handleError(res, err.message, "Failed to get entrance");
             } else {
                 crawlerBacklog.batch.forEach(el =>{
-                    var seed = new Seed(el);
+                    var seed = new Seed(el.id,el.bId,el.bsz,crawlerName);
+                    seed.queued();
 
                     pushToRandomQue(seed);
                 });
@@ -137,51 +135,11 @@ pushToRandomQue = (seed) => {
     QueueList[randomQueueIndex].data.push(seed);
 }
 
-
-
-
-getBatchUrls = function(upperBound,lowerBound,poolSize,queSize){
-
-    var max = 0;
-    var min = 0;
-    max = Math.random()*(upperBound - lowerBound) +  lowerBound;
-    max = parseInt(max);
-    min = max - poolSize;
-
-    var que = [];
-    var len = 0;
-    
-    ArticleBacklog.find({ st: null }).where('i').gt(min).lt(max).exec((err, docs) => {
-        
-        if (err) {
-            handleError(res, err.message, "Failed to get authors.");
-        } else {
-            var i = 0;
-            while(i < docs.length){
-                if(len == queSize){
-                    publishQue(que);
-                    break;
-                }else{
-                    var dice = parseInt(Math.random()*(7 - 1) +  1);
-                    if(dice == 6){
-                        docs[i].st = "inqueue";
-                        docs[i].save();
-                        que.push(docs[i].toObject());
-                        len++;
-                        i++;
-                    };
-                }
-            }
-        }
-    });
-
-}
-
 publishQue = function(queue) {
     QueueList.forEach(queue => {
+        console.log(queue);
         ref.child("queues").push().set(queue.toObject());
     })
-    
 }
 
 
