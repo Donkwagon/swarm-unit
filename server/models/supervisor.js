@@ -14,7 +14,6 @@ var ref = firebaseDb.ref("redis");
 
 var QueueList = [];
 
-const ARTICLE_BACKLOGS_COLLECTION = "articlbacklogs"
 const CRAWLERS_COLLECTION = "crawlers"
 const CRAWLERBACKLOGS_COLLECTION = "crawlerbacklogs"
 

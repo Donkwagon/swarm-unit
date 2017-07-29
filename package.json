@@ -17,7 +17,6 @@
   },
   "private": true,
   "dependencies": {
-    "zone.js": "^0.8.12",
     "@angular/cli": "1.0.0",
     "@angular/common": "^4.0.0",
     "@angular/compiler": "^4.0.0",
@@ -46,7 +45,9 @@
     "rxjs": "^5.1.0",
     "socket.io": "^2.0.1",
     "socket.io-client": "^2.0.1",
-    "ws": "^3.0.0"
+    "vm": "^0.1.0",
+    "ws": "^3.0.0",
+    "zone.js": "^0.8.12"
   },
   "devDependencies": {
     "@angular/cli": "1.0.0",
