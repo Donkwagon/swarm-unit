@@ -70,14 +70,20 @@ executeQue = function(queue,i) {
   crawl(queue.data[i]);
   
   i++;
+
   if(i < queue.data.length){
+
     setTimeout(function(){
       executeQue(queue,i);
     }, intv);
+
   }else{
+
     var endTime = new Date().getTime();
-    var timeConsumed = (endTime - startTime)/1000;
+    var timeConsumed = (endTime - startTime);//in miliseconds 
+
     debrief(queue,timeConsumed);
+
   }
 }
 
@@ -147,9 +153,9 @@ returnCompletedQue = function(queue) {
 
 }
 
-deccelerate = function() {}
+deccelerate = function() {//todo}
 
-accelerate = function() {}
+accelerate = function() {//todo}
 
 URLTransformer = function(urlSeed,type){
   switch (type) {
