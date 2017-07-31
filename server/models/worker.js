@@ -50,34 +50,34 @@ workerSchema.methods.claimQue = () => {
 
         data.forEach(snapshot => {
 
-            var que = snapshot.val();
+            var queue = snapshot.val();
             var key = snapshot.key;
             ref.child(key).remove();
 
-            executeQue(que,0)
+            executeQue(queue,0)
 
         });
 
     });
 }
 
-executeQue = function(que,i) {
+executeQue = function(queue,i) {
   var startTime = new Date().getTime();
   var max = 2000;
   var min = 1000;
   var intv = Math.random() * (max - min) + min;
 
-  crawl(que.data[i]);
+  crawl(queue.data[i]);
   
   i++;
-  if(i < que.data.length){
+  if(i < queue.data.length){
     setTimeout(function(){
-      executeQue(que,i);
+      executeQue(queue,i);
     }, intv);
   }else{
     var endTime = new Date().getTime();
     var timeConsumed = (endTime - startTime)/1000;
-    debrief(que,timeConsumed);
+    debrief(queue,timeConsumed);
   }
 }
 
@@ -109,19 +109,19 @@ crawl = function(task) {
 
 }
 
-debrief = function(que,timeConsumed) {
+debrief = function(queue,timeConsumed) {
 
-  que.status = "completed";
+  queue.status = "completed";
 
   var i = 0;
-  var len = que.data.length;
+  var len = queue.data.length;
   var success = 0;
   var failure = 0;
   var successRate = 0;
 
   while(i < len){
 
-    if(que.data[i].st == "completed"){
+    if(queue.data[i].st == "completed"){
       success++;
     }else{
       failure++;
@@ -132,7 +132,7 @@ debrief = function(que,timeConsumed) {
 
   successRate = success/len;
 
-  que.debrief = {
+  queue.debrief = {
     success: success,
     failure: failure,
     sucessRate: successRate,
@@ -141,9 +141,9 @@ debrief = function(que,timeConsumed) {
 
 }
 
-returnCompletedQue = function(que) {
+returnCompletedQue = function(queue) {
 
-  ref.child("queues").push().set(que.toObject());
+  ref.child("queues").push().set(queue.toObject());
 
 }
 
