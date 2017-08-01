@@ -34,7 +34,7 @@ articleSchema.methods.checkFitness = () => {
   if(!this.title || ! this.username || ! this.author){
 
     this.fitness = numFields/expectedNumFields;
-    return vital;
+    return proceed;
 
   }else{
 

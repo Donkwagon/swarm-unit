@@ -1,9 +1,10 @@
-// grab the things we need
 var mongoose =    require('mongoose');
 var request =     require('request');
 var cheerio =     require('cheerio');
 var os =          require('os');
 var admin =       require("firebase-admin");
+
+const chalk =     require('chalk');
 
 const vm =        require('vm');
 var Article =     require('./content/article.model');
@@ -61,31 +62,36 @@ workerSchema.methods.claimQue = () => {
             var key = snapshot.key;
             ref.child(key).remove();
 
-            executeQue(queue,0)
+            var startTime = new Date().getTime();
+            executeQue(queue,0,startTime)
 
         });
 
     });
 }
 
-executeQue = function(queue,i) {
-  var startTime = new Date().getTime();
-  var max = 2000;
-  var min = 1000;
+executeQue = function(queue,i,startTime) {
+
+  var max = 2000; var min = 1000;
   var intv = Math.random() * (max - min) + min;
 
   var seed = queue.data[i]
+
   matchCrawler(seed);
   
   i++;
 
   if(i < queue.data.length){
+    //keep looping through the queue
 
     setTimeout(function(){
-      executeQue(queue,i);
+
+      executeQue(queue,i,startTime);
+      
     }, intv);
 
   }else{
+    //debrief once the queue is looped through
 
     var endTime = new Date().getTime();
     var timeConsumed = (endTime - startTime);//in miliseconds 
@@ -97,14 +103,32 @@ executeQue = function(queue,i) {
 
 matchCrawler = function(seed) {
 
-  db.collection(CRAWLERS_COLLECTION).findOne({ name: seed.cn }, function(err, crawler) {
-      if (err) {
-        handleError(res, err.message, "Failed to get crawler");
-      } else {
-        crawl(crawler,seed);
-      }
-  });
+  if(crawlers[seed.cn]){
+    //check if crawler exists in the hash table
 
+    var crawler = crawlers[seed.cn];
+
+    crawl(crawler,seed);
+
+  }else{
+
+    db.collection(CRAWLERS_COLLECTION).findOne({ name: seed.cn }, function(err, crawler) {
+
+        if (err) {
+
+          handleError(res, err.message, "Failed to get crawler");
+          
+        } else {
+
+          //store crawler info into the hashtable
+          crawlers[crawler.name] = crawler;
+
+          crawl(crawler,seed);
+
+        }
+    });
+
+  }
 }
 
 crawl = (crawler,seed) => {
@@ -120,17 +144,19 @@ crawl = (crawler,seed) => {
       vm.runInThisContext(crawler.code);
 
       //check if all fields are filled
-      title ?          console.log("success") : console.log("fail");
-      author ?         console.log("success") : console.log("fail");
-      primaryStock ?   console.log("success") : console.log("fail");
-      username ?       console.log("success") : console.log("fail");
-      articleId ?      console.log("success") : console.log("fail");
-      include_stocks ? console.log("success") : console.log("fail");
-      summary ?        console.log("success") : console.log("fail");
-      publish_at ?     console.log("success") : console.log("fail");
-      // seed.res = res.statusCode;
+      // title ?          console.log("success") : console.log("fail");
+      // author ?         console.log("success") : console.log("fail");
+      // primaryStock ?   console.log("success") : console.log("fail");
+      // username ?       console.log("success") : console.log("fail");
+      // articleId ?      console.log("success") : console.log("fail");
+      // include_stocks ? console.log("success") : console.log("fail");
+      // summary ?        console.log("success") : console.log("fail");
+      // publish_at ?     console.log("success") : console.log("fail");
+      
+      seed.res = res.statusCode;
 
       var article = new Article({
+
         title: title,
         author: author,
         username: author,
@@ -139,8 +165,10 @@ crawl = (crawler,seed) => {
         includeStocks: include_stocks,
         primaryStock: primaryStock,
         published_at: publish_at,
+
         created_at: new Date(),
         updated_at: new Date()
+
       });
 
       var proceed = article.checkFitness();
@@ -149,28 +177,70 @@ crawl = (crawler,seed) => {
         article.save();
       }
 
-      // seed.st = "processing";
+      seed.st = "processing";
+      seed.res = res.statusCode;
+      
+      if(err || res.statusCode != 200){
 
-      // if(err||res.statusCode != 200){
-      //   seed.st = "error";
+        seed.st = "error";
+        console.log(chalk.red('err:' + err + ' | st:' + res.statusCode));
 
-      //   if(res.statusCode == 404){console.log(chalk.red('err:' + err + 'st:' + res.statusCode));}
-      //   if(res.statusCode == 429){console.log(chalk.red('err:' + err + 'st:' + res.statusCode));}
+      }else{
+        
+        seed.st = "completed";
+        console.log(chalk.blue('err:' + err + ' | st:' + res.statusCode));
 
-      // }else{
-
-      //   console.log(chalk.green('status' + res.statusCode));
-      //   parserSelector(seed,html,URL,seed.t);
-
-      // }
+      }
   });
+
 }
 
+debrief = function(queue,timeConsumed) {
+
+  queue.status = "completed";
+
+  var i = 0;
+  var len = queue.data.length;
+  var success = 0;
+  var failure = 0;
+  var successRate = 0;
+
+
+  while(i < len){
+
+    if(queue.data[i].st == "completed"){
+      success++;
+    }else{
+      failure++;
+    }
+
+    i++;
+  }
+
+  successRate = success/len;
+  speed = success/timeConsumed;
+
+  queue.debrief = {
+    success: success,
+    failure: failure,
+    sucessRate: successRate,
+    timeConsumed: timeConsumed,
+    speed: speed
+  }
+
+  console.log(queue.debrief);
+  
+  ref.child("queues").push().set(queue);
+
+}
+
+//utility
 UrlConstructor = function(crawler,seed){
-  console.log(crawler);
+  //construct url with params in seed and url strategy in crawler
+
   var url = crawler.urlStrategy.root;
-  var id = seed.id + seed.batchId * seed.batchSize;
-  console.log(id);
+  var id = seed.id + seed.bId * seed.bsz; // id = batch ID * batch size + seed ID
+
 
   crawler.urlStrategy.sections.forEach(section => {
     
@@ -187,7 +257,9 @@ UrlConstructor = function(crawler,seed){
   });
 
   url = url.substring(0, url.length - 1);
+
   return url;
+
 }
 
 emitMsg = (channel,status,content) => {
@@ -197,45 +269,6 @@ emitMsg = (channel,status,content) => {
     content: content
   }
   console.log(msg);
-}
-
-debrief = function(queue,timeConsumed) {
-
-  // que.status = "completed";
-
-  // var i = 0;
-  // var len = que.data.length;
-  // var success = 0;
-  // var failure = 0;
-  // var successRate = 0;
-
-
-  // while(i < len){
-
-  //   if(que.data[i].st == "completed"){
-  //     success++;
-  //   }else{
-  //     failure++;
-  //   }
-
-  //   i++;
-  // }
-
-  // successRate = success/len;
-
-  // que.debrief = {
-  //   success: success,
-  //   failure: failure,
-  //   sucessRate: successRate,
-  //   timeConsumed: timeConsumed
-  // }
-
-}
-
-returnCompletedQue = function(queue) {
-
-  ref.child("queues").push().set(queue.toObject());
-
 }
 
 
