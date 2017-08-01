@@ -25,11 +25,13 @@ var articleSchema = new Schema({
 });
 
 
-articleSchema.methods.checkFitness = () => {
+articleSchema.methods.checkFitness = function() {
 
   var proceed = false;
   var expectedNumFields = 8;
   var numFields = 0;
+
+  console.log(this.title);
 
   if(!this.title || ! this.username || ! this.author){
 

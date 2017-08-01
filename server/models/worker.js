@@ -28,7 +28,7 @@ var workerSchema = new Schema({
 
 });
 
-workerSchema.methods.registerServer = () => {
+workerSchema.methods.registerServer = function() {
 
   var serversQue = ref.child("servers");
   var server = {
@@ -50,7 +50,7 @@ workerSchema.methods.registerServer = () => {
   
 }
 
-workerSchema.methods.claimQue = () => {
+workerSchema.methods.claimQue = function() {
   
     var queuesRef = ref.child("queues");
 
@@ -158,6 +158,7 @@ crawl = (crawler,seed) => {
       var article = new Article({
 
         title: title,
+        articleId: seed.id + seed.bId * seed.bsz,
         author: author,
         username: author,
         summary: summary,
@@ -170,11 +171,14 @@ crawl = (crawler,seed) => {
         updated_at: new Date()
 
       });
-
+      console.log(title);
       var proceed = article.checkFitness();
 
       if(proceed){
-        article.save();
+        console.log(chalk.blue('trying to save'));
+        article.save(function (err) {
+          console.log(err);
+        });
       }
 
       seed.st = "processing";
@@ -186,7 +190,7 @@ crawl = (crawler,seed) => {
         console.log(chalk.red('err:' + err + ' | st:' + res.statusCode));
 
       }else{
-        
+
         seed.st = "completed";
         console.log(chalk.blue('err:' + err + ' | st:' + res.statusCode));
 

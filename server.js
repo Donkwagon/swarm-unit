@@ -36,5 +36,5 @@ mongoose.connect(conStr);
 
 
 var main =  require('./server/main');
-setTimeout(function(){main();}, 5000);
+setTimeout(function(){main();}, 3000);
 
