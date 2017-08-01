@@ -57,18 +57,18 @@ workerSchema.methods.claimQue = () => {
 
         data.forEach(snapshot => {
 
-            var que = snapshot.val();
+            var queue = snapshot.val();
             var key = snapshot.key;
             ref.child(key).remove();
 
-            executeQue(que,0)
+            executeQue(queue,0)
 
         });
 
     });
 }
 
-executeQue = function(que,i) {
+executeQue = function(queue,i) {
   var startTime = new Date().getTime();
   var max = 2000;
   var min = 1000;
@@ -80,13 +80,18 @@ executeQue = function(que,i) {
   i++;
 
   if(i < que.data.length){
+
     setTimeout(function(){
-      executeQue(que,i);
+      executeQue(queue,i);
     }, intv);
+
   }else{
+
     var endTime = new Date().getTime();
-    var timeConsumed = (endTime - startTime)/1000;
-    debrief(que,timeConsumed);
+    var timeConsumed = (endTime - startTime);//in miliseconds 
+
+    debrief(queue,timeConsumed);
+
   }
 }
 
@@ -174,7 +179,7 @@ emitMsg = (channel,status,content) => {
   console.log(msg);
 }
 
-debrief = function(que,timeConsumed) {
+debrief = function(queue,timeConsumed) {
 
   // que.status = "completed";
 
@@ -183,6 +188,7 @@ debrief = function(que,timeConsumed) {
   // var success = 0;
   // var failure = 0;
   // var successRate = 0;
+
 
   // while(i < len){
 
@@ -206,13 +212,13 @@ debrief = function(que,timeConsumed) {
 
 }
 
-returnCompletedQue = function(que) {
+returnCompletedQue = function(queue) {
 
-  ref.child("queues").push().set(que.toObject());
+  ref.child("queues").push().set(queue.toObject());
 
 }
 
-deccelerate = function() {}
+deccelerate = function() {//todo}
 
 accelerate = function() {}
 parserSelector = function(seed,html,URL,type){
