@@ -13,6 +13,8 @@ var articleSchema = new Schema({
   includeStocks: Array,
   primaryStock: Schema.Types.Mixed,
 
+  fitness: Number,
+
   authorInfo: Boolean,
   securityInfo: Boolean,
 
@@ -23,6 +25,39 @@ var articleSchema = new Schema({
 });
 
 
+articleSchema.methods.checkFitness = () => {
+
+  var proceed = false;
+  var expectedNumFields = 8;
+  var numFields = 0;
+
+  if(!this.title || ! this.username || ! this.author){
+
+    this.fitness = numFields/expectedNumFields;
+    return vital;
+
+  }else{
+
+    this.title ? numFields++ : numFields+=0;
+    this.author ? numFields++ : numFields+=0;
+    this.username ? numFields++ : numFields+=0;
+    this.summary ? numFields++ : numFields+=0;
+    this.articleUrl ? numFields++ : numFields+=0;
+    this.includeStocks ? numFields++ : numFields+=0;
+    this.primaryStock ? numFields++ : numFields+=0;
+    this.published_at ? numFields++ : numFields+=0;
+
+    this.fitness = numFields/expectedNumFields;
+
+    proceed = true;
+
+  }
+
+  return proceed;
+
+
+  
+}
 
 var Article = mongoose.model('Article', articleSchema);
 

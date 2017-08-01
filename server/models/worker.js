@@ -4,9 +4,9 @@ var request =     require('request');
 var cheerio =     require('cheerio');
 var os =          require('os');
 var admin =       require("firebase-admin");
-var chalk =       require('chalk');
-var Parser =      require('../parsers/parser');
+
 const vm =        require('vm');
+var Article =     require('./content/article.model');
 
 const CRAWLERS_COLLECTION = "crawlers"
 const CRAWLERBACKLOGS_COLLECTION = "crawlerbacklogs"
@@ -74,12 +74,12 @@ executeQue = function(queue,i) {
   var min = 1000;
   var intv = Math.random() * (max - min) + min;
 
-  var seed = que.data[i]
+  var seed = queue.data[i]
   matchCrawler(seed);
   
   i++;
 
-  if(i < que.data.length){
+  if(i < queue.data.length){
 
     setTimeout(function(){
       executeQue(queue,i);
@@ -102,7 +102,6 @@ matchCrawler = function(seed) {
         handleError(res, err.message, "Failed to get crawler");
       } else {
         crawl(crawler,seed);
-        console.log(crawler);
       }
   });
 
@@ -119,16 +118,37 @@ crawl = (crawler,seed) => {
     
       global.$ = cheerio.load(html);
       vm.runInThisContext(crawler.code);
+
       //check if all fields are filled
-      title ?          console.log("success")          : console.log("fail");
-      author ?         console.log("success")         : console.log("fail");
-      primaryStock ?   console.log("success")   : console.log("fail");
-      username ?       console.log("success")       : console.log("fail");
-      articleId ?      console.log("success")      : console.log("fail");
+      title ?          console.log("success") : console.log("fail");
+      author ?         console.log("success") : console.log("fail");
+      primaryStock ?   console.log("success") : console.log("fail");
+      username ?       console.log("success") : console.log("fail");
+      articleId ?      console.log("success") : console.log("fail");
       include_stocks ? console.log("success") : console.log("fail");
-      summary ?        console.log("success")        : console.log("fail");
-      publish_at ?     console.log("success")     : console.log("fail");
+      summary ?        console.log("success") : console.log("fail");
+      publish_at ?     console.log("success") : console.log("fail");
       // seed.res = res.statusCode;
+
+      var article = new Article({
+        title: title,
+        author: author,
+        username: author,
+        summary: summary,
+        articleUrl: URL,
+        includeStocks: include_stocks,
+        primaryStock: primaryStock,
+        published_at: publish_at,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+
+      var proceed = article.checkFitness();
+
+      if(proceed){
+        article.save();
+      }
+
       // seed.st = "processing";
 
       // if(err||res.statusCode != 200){
@@ -218,17 +238,6 @@ returnCompletedQue = function(queue) {
 
 }
 
-deccelerate = function() {//todo}
-
-accelerate = function() {}
-parserSelector = function(seed,html,URL,type){
-  parser = new Parser();
-  switch (type) {
-    case "SAArticle":
-      data = parser.SAArticle(html,URL);
-      seed.st = "completed";
-  }
-}
 
 var Worker = mongoose.model('Worker', workerSchema);
 
